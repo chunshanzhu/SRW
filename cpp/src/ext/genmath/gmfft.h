@@ -13,8 +13,8 @@
 
 #ifndef __GMFFT_H
 #define __GMFFT_H
-
-#include "fftw.h"
+#include <complex>
+#include <fftw3.h>
 
 //#ifdef __IGOR_PRO__
 //#include "srigintr.h"
@@ -22,7 +22,18 @@
 //#include "srercode.h"
 
 //#include <cmath>
+
+typedef double fftw_real;
+
 #include <math.h>
+
+typedef struct{
+     fftw_real re, im;
+}FFTW_COMPLEX;
+#define c_re(c)  ((c).re)
+#define c_im(c)  ((c).im)
+
+typedef double FFTW_REAL;
 
 #ifndef _GM_WITHOUT_BASE
 #include "gmobj.h"
@@ -185,8 +196,10 @@ public:
 	{// Assumes Nx, Ny even !
 		//long HalfNyNx = HalfNy*Nx;
 		long long HalfNyNx = ((long long)HalfNy)*((long long)Nx);
-		FFTW_COMPLEX *t1 = pAfterFFT, *t2 = pAfterFFT + (HalfNyNx + HalfNx);
-	    FFTW_COMPLEX *t3 = pAfterFFT + HalfNx, *t4 = pAfterFFT + HalfNyNx;
+		FFTW_COMPLEX *t1 = pAfterFFT;
+	        FFTW_COMPLEX *t2 = pAfterFFT + (HalfNyNx + HalfNx);
+	   	FFTW_COMPLEX *t3 = pAfterFFT + HalfNx;
+	       	FFTW_COMPLEX *t4 = pAfterFFT + HalfNyNx;
 		FFTW_COMPLEX Buf;
 		for(long jj=0; jj<HalfNy; jj++)
 		{
