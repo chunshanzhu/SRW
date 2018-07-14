@@ -23,7 +23,7 @@
 
 //#include <cmath>
 
-typedef double fftw_real;
+typedef float fftw_real;
 
 #include <math.h>
 
@@ -33,7 +33,7 @@ typedef struct{
 #define c_re(c)  ((c).re)
 #define c_im(c)  ((c).im)
 
-typedef double FFTW_REAL;
+typedef fftw_real FFTW_REAL;
 
 #ifndef _GM_WITHOUT_BASE
 #include "gmobj.h"
