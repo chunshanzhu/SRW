@@ -18,7 +18,7 @@ CFLAGS=	-O3 -fPIC -I$(SRW_SRC_GEN_DIR) -I$(SRW_SRC_LIB_DIR) -I$(SH_SRC_PARSE_DIR
 
 #PYPATH=/nsls2/projects/bldev/bldev-env
 PYPATH=/usr
-PYFLAGS=-I$(PYPATH)/include/python3.6m -L$(PYPATH)/lib/python3.6
+PYFLAGS=-I$(PYPATH)/include/python3.7m -L$(PYPATH)/lib/python3.7
 #PYFLAGS=-I$(PYPATH)/include/python2.7 -L$(PYPATH)/lib/python2.7
 #PYFLAGS=-I$(PYPATH)/include/python2.6 -L$(PYPATH)/lib/python2.6
 
