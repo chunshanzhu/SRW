@@ -1062,95 +1062,381 @@ int srTDriftSpace::PropagateRadiationSimple_NumIntFresnel(srTSRWRadStructAccessD
 	double invL = 1./Length;
 
 	double ePh = pRadAccessData->eStart;
-	for(long ie=0; ie<pRadAccessData->ne; ie++)
+/*******************************************************************/
+	if((arAuxEx != 0)&&(arAuxEz != 0))
 	{
-		double pi_d_lambda_m = ePh*2.533865612E+06;
-		double invPiLambda_m = ePh*invL*0.80655447456E+06;
-
-		//long iePerE = ie << 1;
-		long long iePerE = ie << 1;
-		double z = pRadAccessData->zStart;
-		for(long iz=0; iz<pRadAccessData->nz; iz++)
+		for(long ie=0; ie<pRadAccessData->ne; ie++)
 		{
-			//long izPerZ = iz*perZ;
-			long long izPerZ = iz*perZ;
-			double x = pRadAccessData->xStart;
-			for(long ix=0; ix<pRadAccessData->nx; ix++)
-			{			
-				double z1 = pRadAccessData->zStart;
-				for(long iz1=0; iz1<pRadAccessData->nz; iz1++)
-				{
-					double dz = (z1 - z);
-					double dze2 = dz*dz;
+			double pi_d_lambda_m = ePh*2.533865612E+06;
+			double invPiLambda_m = ePh*invL*0.80655447456E+06;
 
-					//long iz1PerZ = iz1*perZ;
-					long long iz1PerZ = iz1*perZ;
-					double x1 = pRadAccessData->xStart;
-					for(long ix1=0; ix1<pRadAccessData->nx; ix1++)
+			//long iePerE = ie << 1;
+			long long iePerE = ie << 1;
+			double z = pRadAccessData->zStart;
+			for(long iz=0; iz<pRadAccessData->nz; iz++)
+			{
+				//long izPerZ = iz*perZ;
+				long long izPerZ = iz*perZ;
+				double x = pRadAccessData->xStart;
+				for(long ix=0; ix<pRadAccessData->nx; ix++)
+				{			
+					double z1 = pRadAccessData->zStart;
+					for(long iz1=0; iz1<pRadAccessData->nz; iz1++)
 					{
-						double dx = (x1 - x);
-						double dxe2 = dx*dx;
-						double quadTerm = (dxe2 + dze2)*invL;
-						double a = quadTerm*invL;
-						double phase = pi_d_lambda_m*quadTerm*(1. - 0.25*a + 0.125*a*a);
-						double cosPh = cos(phase), sinPh = sin(phase);
+						double dz = (z1 - z);
+						double dze2 = dz*dz;
 
-						//long ix1PerX = ix1*perX;
-						//long ofst1 = iz1PerZ + ix1PerX + iePerE;
-						long long ix1PerX = ix1*perX;
-						long long ofst1 = iz1PerZ + ix1PerX + iePerE;
-						float *pEx1 = arAuxEx + ofst1;
-						float *pEz1 = arAuxEz + ofst1;
-
-						if(arAuxEx != 0)
+						//long iz1PerZ = iz1*perZ;
+						long long iz1PerZ = iz1*perZ;
+						double x1 = pRadAccessData->xStart;
+						for(long ix1=0; ix1<pRadAccessData->nx; ix1++)
 						{
-							float ReEx1 = *pEx1, ImEx1 = *(pEx1 + 1);
-							arReExVsX[ix1] = invPiLambda_m*(ReEx1*sinPh + ImEx1*cosPh);
-							arImExVsX[ix1] = invPiLambda_m*(ImEx1*sinPh - ReEx1*cosPh);
+							double dx = (x1 - x);
+							double dxe2 = dx*dx;
+							double quadTerm = (dxe2 + dze2)*invL;
+							double a = quadTerm*invL;
+							double phase = pi_d_lambda_m*quadTerm*(1. - 0.25*a + 0.125*a*a);
+							double cosPh = cos(phase), sinPh = sin(phase);
+
+							//long ix1PerX = ix1*perX;
+							//long ofst1 = iz1PerZ + ix1PerX + iePerE;
+							long long ix1PerX = ix1*perX;
+							long long ofst1 = iz1PerZ + ix1PerX + iePerE;
+							float *pEx1 = arAuxEx + ofst1;
+							float *pEz1 = arAuxEz + ofst1;
+
+							//if(arAuxEx != 0)
+							{
+								float ReEx1 = *pEx1, ImEx1 = *(pEx1 + 1);
+								arReExVsX[ix1] = invPiLambda_m*(ReEx1*sinPh + ImEx1*cosPh);
+								arImExVsX[ix1] = invPiLambda_m*(ImEx1*sinPh - ReEx1*cosPh);
+							}
+							//if(arAuxEz != 0)
+							{
+								float ReEz1 = *pEz1, ImEz1 = *(pEz1 + 1);
+								arReEzVsX[ix1] = invPiLambda_m*(ReEz1*sinPh + ImEz1*cosPh);
+								arImEzVsX[ix1] = invPiLambda_m*(ImEz1*sinPh - ReEz1*cosPh);
+							}
+							x1 += pRadAccessData->xStep;
+						}
+						//if(arAuxEx != 0)
+						{
+							arReFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReExVsX, pRadAccessData->nx, pRadAccessData->xStep);
+							arImFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImExVsX, pRadAccessData->nx, pRadAccessData->xStep);
+						}
+						//if(arAuxEz != 0)
+						{
+							arReFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
+							arImFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
+						}
+						z1 += pRadAccessData->zStep;
+					}
+
+					//long ixPerX = ix*perX;
+					//long ofst = izPerZ + ixPerX + iePerE;
+					long long ixPerX = ix*perX;
+					long long ofst = izPerZ + ixPerX + iePerE;
+					float *pEx = pRadAccessData->pBaseRadX + ofst;
+					float *pEz = pRadAccessData->pBaseRadZ + ofst;
+
+					//if(arAuxEx != 0)
+					{
+						*pEx = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+						*(pEx + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+					}
+					//if(arAuxEz != 0)
+					{
+						*pEz = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+						*(pEz + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+					}
+					x += pRadAccessData->xStep;
+				}
+				z += pRadAccessData->zStep;
+			}
+			ePh += pRadAccessData->eStep;
+		}
+	}
+/*******************************************************************/
+	else if((arAuxEx == 0)&&(arAuxEz != 0))
+	{
+		for(long ie=0; ie<pRadAccessData->ne; ie++)
+		{
+			double pi_d_lambda_m = ePh*2.533865612E+06;
+			double invPiLambda_m = ePh*invL*0.80655447456E+06;
+
+			//long iePerE = ie << 1;
+			long long iePerE = ie << 1;
+			double z = pRadAccessData->zStart;
+			for(long iz=0; iz<pRadAccessData->nz; iz++)
+			{
+				//long izPerZ = iz*perZ;
+				long long izPerZ = iz*perZ;
+				double x = pRadAccessData->xStart;
+				for(long ix=0; ix<pRadAccessData->nx; ix++)
+				{			
+					double z1 = pRadAccessData->zStart;
+					for(long iz1=0; iz1<pRadAccessData->nz; iz1++)
+					{
+						double dz = (z1 - z);
+						double dze2 = dz*dz;
+
+						//long iz1PerZ = iz1*perZ;
+						long long iz1PerZ = iz1*perZ;
+						double x1 = pRadAccessData->xStart;
+						for(long ix1=0; ix1<pRadAccessData->nx; ix1++)
+						{
+							double dx = (x1 - x);
+							double dxe2 = dx*dx;
+							double quadTerm = (dxe2 + dze2)*invL;
+							double a = quadTerm*invL;
+							double phase = pi_d_lambda_m*quadTerm*(1. - 0.25*a + 0.125*a*a);
+							double cosPh = cos(phase), sinPh = sin(phase);
+
+							//long ix1PerX = ix1*perX;
+							//long ofst1 = iz1PerZ + ix1PerX + iePerE;
+							long long ix1PerX = ix1*perX;
+							long long ofst1 = iz1PerZ + ix1PerX + iePerE;
+							float *pEx1 = arAuxEx + ofst1;
+							float *pEz1 = arAuxEz + ofst1;
+
+							/*if(arAuxEx != 0)
+							{
+								float ReEx1 = *pEx1, ImEx1 = *(pEx1 + 1);
+								arReExVsX[ix1] = invPiLambda_m*(ReEx1*sinPh + ImEx1*cosPh);
+								arImExVsX[ix1] = invPiLambda_m*(ImEx1*sinPh - ReEx1*cosPh);
+							}*/
+							//if(arAuxEz != 0)
+							{
+								float ReEz1 = *pEz1, ImEz1 = *(pEz1 + 1);
+								arReEzVsX[ix1] = invPiLambda_m*(ReEz1*sinPh + ImEz1*cosPh);
+								arImEzVsX[ix1] = invPiLambda_m*(ImEz1*sinPh - ReEz1*cosPh);
+							}
+							x1 += pRadAccessData->xStep;
+						}
+						/*if(arAuxEx != 0)
+						{
+							arReFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReExVsX, pRadAccessData->nx, pRadAccessData->xStep);
+							arImFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImExVsX, pRadAccessData->nx, pRadAccessData->xStep);
+						}*/
+						//if(arAuxEz != 0)
+						{
+							arReFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
+							arImFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
+						}
+						z1 += pRadAccessData->zStep;
+					}
+
+					//long ixPerX = ix*perX;
+					//long ofst = izPerZ + ixPerX + iePerE;
+					long long ixPerX = ix*perX;
+					long long ofst = izPerZ + ixPerX + iePerE;
+					float *pEx = pRadAccessData->pBaseRadX + ofst;
+					float *pEz = pRadAccessData->pBaseRadZ + ofst;
+
+					/*if(arAuxEx != 0)
+					{
+						*pEx = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+						*(pEx + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+					}*/
+					//if(arAuxEz != 0)
+					{
+						*pEz = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+						*(pEz + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+					}
+					x += pRadAccessData->xStep;
+				}
+				z += pRadAccessData->zStep;
+			}
+			ePh += pRadAccessData->eStep;
+		}
+	}
+/*******************************************************************/
+	else if((arAuxEx != 0)&&(arAuxEz == 0))
+	{
+		for(long ie=0; ie<pRadAccessData->ne; ie++)
+		{
+			double pi_d_lambda_m = ePh*2.533865612E+06;
+			double invPiLambda_m = ePh*invL*0.80655447456E+06;
+
+			//long iePerE = ie << 1;
+			long long iePerE = ie << 1;
+			double z = pRadAccessData->zStart;
+			for(long iz=0; iz<pRadAccessData->nz; iz++)
+			{
+				//long izPerZ = iz*perZ;
+				long long izPerZ = iz*perZ;
+				double x = pRadAccessData->xStart;
+				for(long ix=0; ix<pRadAccessData->nx; ix++)
+				{			
+					double z1 = pRadAccessData->zStart;
+					for(long iz1=0; iz1<pRadAccessData->nz; iz1++)
+					{
+						double dz = (z1 - z);
+						double dze2 = dz*dz;
+
+						//long iz1PerZ = iz1*perZ;
+						long long iz1PerZ = iz1*perZ;
+						double x1 = pRadAccessData->xStart;
+						for(long ix1=0; ix1<pRadAccessData->nx; ix1++)
+						{
+							double dx = (x1 - x);
+							double dxe2 = dx*dx;
+							double quadTerm = (dxe2 + dze2)*invL;
+							double a = quadTerm*invL;
+							double phase = pi_d_lambda_m*quadTerm*(1. - 0.25*a + 0.125*a*a);
+							double cosPh = cos(phase), sinPh = sin(phase);
+
+							//long ix1PerX = ix1*perX;
+							//long ofst1 = iz1PerZ + ix1PerX + iePerE;
+							long long ix1PerX = ix1*perX;
+							long long ofst1 = iz1PerZ + ix1PerX + iePerE;
+							float *pEx1 = arAuxEx + ofst1;
+							float *pEz1 = arAuxEz + ofst1;
+
+							//if(arAuxEx != 0)
+							{
+								float ReEx1 = *pEx1, ImEx1 = *(pEx1 + 1);
+								arReExVsX[ix1] = invPiLambda_m*(ReEx1*sinPh + ImEx1*cosPh);
+								arImExVsX[ix1] = invPiLambda_m*(ImEx1*sinPh - ReEx1*cosPh);
+							}
+							/*if(arAuxEz != 0)
+							{
+								float ReEz1 = *pEz1, ImEz1 = *(pEz1 + 1);
+								arReEzVsX[ix1] = invPiLambda_m*(ReEz1*sinPh + ImEz1*cosPh);
+								arImEzVsX[ix1] = invPiLambda_m*(ImEz1*sinPh - ReEz1*cosPh);
+							}*/
+							x1 += pRadAccessData->xStep;
+						}
+						//if(arAuxEx != 0)
+						{
+							arReFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReExVsX, pRadAccessData->nx, pRadAccessData->xStep);
+							arImFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImExVsX, pRadAccessData->nx, pRadAccessData->xStep);
+						}
+						/*if(arAuxEz != 0)
+						{
+							arReFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
+							arImFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
+						}*/
+						z1 += pRadAccessData->zStep;
+					}
+
+					//long ixPerX = ix*perX;
+					//long ofst = izPerZ + ixPerX + iePerE;
+					long long ixPerX = ix*perX;
+					long long ofst = izPerZ + ixPerX + iePerE;
+					float *pEx = pRadAccessData->pBaseRadX + ofst;
+					float *pEz = pRadAccessData->pBaseRadZ + ofst;
+
+					//if(arAuxEx != 0)
+					{
+						*pEx = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+						*(pEx + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+					}
+					/*if(arAuxEz != 0)
+					{
+						*pEz = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+						*(pEz + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+					}*/
+					x += pRadAccessData->xStep;
+				}
+				z += pRadAccessData->zStep;
+			}
+			ePh += pRadAccessData->eStep;
+		}
+	}
+/*******************************************************************/
+	else if((arAuxEx == 0)&&(arAuxEz == 0))
+	{
+		for(long ie=0; ie<pRadAccessData->ne; ie++)
+		{
+			double pi_d_lambda_m = ePh*2.533865612E+06;
+			double invPiLambda_m = ePh*invL*0.80655447456E+06;
+
+			//long iePerE = ie << 1;
+			long long iePerE = ie << 1;
+			double z = pRadAccessData->zStart;
+			for(long iz=0; iz<pRadAccessData->nz; iz++)
+			{
+				//long izPerZ = iz*perZ;
+				long long izPerZ = iz*perZ;
+				double x = pRadAccessData->xStart;
+				for(long ix=0; ix<pRadAccessData->nx; ix++)
+				{			
+					double z1 = pRadAccessData->zStart;
+					for(long iz1=0; iz1<pRadAccessData->nz; iz1++)
+					{
+						double dz = (z1 - z);
+						double dze2 = dz*dz;
+
+						//long iz1PerZ = iz1*perZ;
+						long long iz1PerZ = iz1*perZ;
+						double x1 = pRadAccessData->xStart;
+						for(long ix1=0; ix1<pRadAccessData->nx; ix1++)
+						{
+							double dx = (x1 - x);
+							double dxe2 = dx*dx;
+							double quadTerm = (dxe2 + dze2)*invL;
+							double a = quadTerm*invL;
+							double phase = pi_d_lambda_m*quadTerm*(1. - 0.25*a + 0.125*a*a);
+							double cosPh = cos(phase), sinPh = sin(phase);
+
+							//long ix1PerX = ix1*perX;
+							//long ofst1 = iz1PerZ + ix1PerX + iePerE;
+							long long ix1PerX = ix1*perX;
+							long long ofst1 = iz1PerZ + ix1PerX + iePerE;
+							float *pEx1 = arAuxEx + ofst1;
+							float *pEz1 = arAuxEz + ofst1;
+
+							/*if(arAuxEx != 0)
+							{
+								float ReEx1 = *pEx1, ImEx1 = *(pEx1 + 1);
+								arReExVsX[ix1] = invPiLambda_m*(ReEx1*sinPh + ImEx1*cosPh);
+								arImExVsX[ix1] = invPiLambda_m*(ImEx1*sinPh - ReEx1*cosPh);
+							}
+							if(arAuxEz != 0)
+							{
+								float ReEz1 = *pEz1, ImEz1 = *(pEz1 + 1);
+								arReEzVsX[ix1] = invPiLambda_m*(ReEz1*sinPh + ImEz1*cosPh);
+								arImEzVsX[ix1] = invPiLambda_m*(ImEz1*sinPh - ReEz1*cosPh);
+							}*/
+							x1 += pRadAccessData->xStep;
+						}
+						/*if(arAuxEx != 0)
+						{
+							arReFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReExVsX, pRadAccessData->nx, pRadAccessData->xStep);
+							arImFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImExVsX, pRadAccessData->nx, pRadAccessData->xStep);
 						}
 						if(arAuxEz != 0)
 						{
-							float ReEz1 = *pEz1, ImEz1 = *(pEz1 + 1);
-							arReEzVsX[ix1] = invPiLambda_m*(ReEz1*sinPh + ImEz1*cosPh);
-							arImEzVsX[ix1] = invPiLambda_m*(ImEz1*sinPh - ReEz1*cosPh);
-						}
-						x1 += pRadAccessData->xStep;
+							arReFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
+							arImFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
+						}*/
+						z1 += pRadAccessData->zStep;
 					}
-					if(arAuxEx != 0)
+
+					//long ixPerX = ix*perX;
+					//long ofst = izPerZ + ixPerX + iePerE;
+					long long ixPerX = ix*perX;
+					long long ofst = izPerZ + ixPerX + iePerE;
+					float *pEx = pRadAccessData->pBaseRadX + ofst;
+					float *pEz = pRadAccessData->pBaseRadZ + ofst;
+
+					/*if(arAuxEx != 0)
 					{
-						arReFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReExVsX, pRadAccessData->nx, pRadAccessData->xStep);
-						arImFxVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImExVsX, pRadAccessData->nx, pRadAccessData->xStep);
+						*pEx = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+						*(pEx + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
 					}
 					if(arAuxEz != 0)
 					{
-						arReFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arReEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
-						arImFzVsZ[iz1] = CGenMathMeth::Integ1D_FuncDefByArray(arImEzVsX, pRadAccessData->nx, pRadAccessData->xStep);
-					}
-					z1 += pRadAccessData->zStep;
+						*pEz = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+						*(pEz + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
+					}*/
+					x += pRadAccessData->xStep;
 				}
-
-				//long ixPerX = ix*perX;
-				//long ofst = izPerZ + ixPerX + iePerE;
-				long long ixPerX = ix*perX;
-				long long ofst = izPerZ + ixPerX + iePerE;
-				float *pEx = pRadAccessData->pBaseRadX + ofst;
-				float *pEz = pRadAccessData->pBaseRadZ + ofst;
-
-				if(arAuxEx != 0)
-				{
-					*pEx = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
-					*(pEx + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFxVsZ, pRadAccessData->nz, pRadAccessData->zStep);
-				}
-				if(arAuxEz != 0)
-				{
-					*pEz = (float)CGenMathMeth::Integ1D_FuncDefByArray(arReFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
-					*(pEz + 1) = (float)CGenMathMeth::Integ1D_FuncDefByArray(arImFzVsZ, pRadAccessData->nz, pRadAccessData->zStep);
-				}
-				x += pRadAccessData->xStep;
+				z += pRadAccessData->zStep;
 			}
-			z += pRadAccessData->zStep;
+			ePh += pRadAccessData->eStep;
 		}
-		ePh += pRadAccessData->eStep;
 	}
 
 	if(arReExVsX != 0) delete[] arReExVsX;

@@ -252,36 +252,174 @@ public:
 		float *tShiftY = ArrayShiftY;
 		float MultY_Re = 1., MultY_Im = 0., MultX_Re = 1., MultX_Im = 0.;
 		float MultRe, MultIm;
-
-		for(long iy=0; iy<Ny; iy++)
+/********************************************************************/
+		if(NeedsShiftX && NeedsShiftY)
 		{
-			if(NeedsShiftY) { MultY_Re = *(tShiftY++); MultY_Im = *(tShiftY++);}
-			float *tShiftX = ArrayShiftX;
-			for(long ix=0; ix<Nx; ix++)
+			for(long iy=0; iy<Ny; iy++)
 			{
-				if(NeedsShiftX) 
-				{ 
-					MultX_Re = *(tShiftX++); MultX_Im = *(tShiftX++);
-					if(NeedsShiftY)
-					{
-						MultRe = MultX_Re*MultY_Re - MultX_Im*MultY_Im;
-						MultIm = MultX_Re*MultY_Im + MultX_Im*MultY_Re;
+				//if(NeedsShiftY) 
+				{
+					{ MultY_Re = *(tShiftY++); MultY_Im = *(tShiftY++);}
+				}
+				float *tShiftX = ArrayShiftX;
+				for(long ix=0; ix<Nx; ix++)
+				{
+					//if(NeedsShiftX) 
+					{ 
+						MultX_Re = *(tShiftX++); MultX_Im = *(tShiftX++);
+						//if(NeedsShiftY)
+						{
+							MultRe = MultX_Re*MultY_Re - MultX_Im*MultY_Im;
+							MultIm = MultX_Re*MultY_Im + MultX_Im*MultY_Re;
+						}
+/*
+						else
+						{
+							MultRe = MultX_Re; MultIm = MultX_Im;
+						}
+*/
 					}
+/*
 					else
 					{
-						MultRe = MultX_Re; MultIm = MultX_Im;
+						MultRe = MultY_Re; MultIm = MultY_Im;
 					}
+*/
+					float NewRe = t->re*MultRe - t->im*MultIm;
+					float NewIm = t->re*MultIm + t->im*MultRe;
+
+					t->re = NewRe;
+					(t++)->im = NewIm;
 				}
-				else
+			}
+		}
+/******************************************************************/
+
+		else if(NeedsShiftX && (NeedsShiftY==0))
+		{
+		for(long iy=0; iy<Ny; iy++)
+			{
+				//if(NeedsShiftY) { MultY_Re = *(tShiftY++); MultY_Im = *(tShiftY++);}
+				float *tShiftX = ArrayShiftX;
+				for(long ix=0; ix<Nx; ix++)
 				{
-					MultRe = MultY_Re; MultIm = MultY_Im;
+	//				if(NeedsShiftX) 
+					{ 
+						MultX_Re = *(tShiftX++); MultX_Im = *(tShiftX++);
+						/*
+						if(NeedsShiftY)
+						{
+							MultRe = MultX_Re*MultY_Re - MultX_Im*MultY_Im;
+							MultIm = MultX_Re*MultY_Im + MultX_Im*MultY_Re;
+						}
+						else
+	*/
+						{
+							MultRe = MultX_Re; MultIm = MultX_Im;
+						}
+					}
+	/*
+					else
+					{
+						MultRe = MultY_Re; MultIm = MultY_Im;
+					}
+	*/
+
+					float NewRe = t->re*MultRe - t->im*MultIm;
+					float NewIm = t->re*MultIm + t->im*MultRe;
+
+					t->re = NewRe;
+					(t++)->im = NewIm;
 				}
+			}
+		}
+/**************************************************************************/
+		else if((NeedsShiftX==0) && NeedsShiftY)
+		{
+			for(long iy=0; iy<Ny; iy++)
+			{
+				//if(NeedsShiftY)
+				{
+					{ MultY_Re = *(tShiftY++); MultY_Im = *(tShiftY++);}
+				}
+				float *tShiftX = ArrayShiftX;
+				for(long ix=0; ix<Nx; ix++)
+				{
+/*					if(NeedsShiftX) 
+					{ 
+						MultX_Re = *(tShiftX++); MultX_Im = *(tShiftX++);
+						
+						if(NeedsShiftY)
+						{
+							MultRe = MultX_Re*MultY_Re - MultX_Im*MultY_Im;
+							MultIm = MultX_Re*MultY_Im + MultX_Im*MultY_Re;
+						}
+						else
+	
+						{
+							MultRe = MultX_Re; MultIm = MultX_Im;
+						}
+					}
+	
+					else
+*/
+					{
+						MultRe = MultY_Re; MultIm = MultY_Im;
+					}
+	
 
-				float NewRe = t->re*MultRe - t->im*MultIm;
-				float NewIm = t->re*MultIm + t->im*MultRe;
+					float NewRe = t->re*MultRe - t->im*MultIm;
+					float NewIm = t->re*MultIm + t->im*MultRe;
 
-				t->re = NewRe;
-				(t++)->im = NewIm;
+					t->re = NewRe;
+					(t++)->im = NewIm;
+				}
+			}
+		}
+
+/******************************************************************/
+
+		else if((NeedsShiftX==0) && (NeedsShiftY == 0))
+		{
+			for(long iy=0; iy<Ny; iy++)
+			{
+/*				if(NeedsShiftY)
+				{
+					{ MultY_Re = *(tShiftY++); MultY_Im = *(tShiftY++);}
+				}
+*/
+				float *tShiftX = ArrayShiftX;
+				for(long ix=0; ix<Nx; ix++)
+				{
+/*					if(NeedsShiftX) 
+					{ 
+						MultX_Re = *(tShiftX++); MultX_Im = *(tShiftX++);
+						
+						if(NeedsShiftY)
+						{
+							MultRe = MultX_Re*MultY_Re - MultX_Im*MultY_Im;
+							MultIm = MultX_Re*MultY_Im + MultX_Im*MultY_Re;
+						}
+						else
+	
+						{
+							MultRe = MultX_Re; MultIm = MultX_Im;
+						}
+					}
+	
+					else
+*/
+					{
+						MultRe = MultY_Re; MultIm = MultY_Im;
+					}
+	
+
+					float NewRe = t->re*MultRe - t->im*MultIm;
+					float NewIm = t->re*MultIm + t->im*MultRe;
+
+					t->re = NewRe;
+					(t++)->im = NewIm;
+				}
 			}
 		}
 	}
