@@ -205,11 +205,7 @@ int CGenMathFFT2D::AuxDebug_TestFFT_Plans()
 		int CurN = GoodNumbers[i];
 		fftwf_complex *inout_p;
 	        inout_p = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex)*CurN);
-		if(inout_p == 0)
-		{
-			return MEMORY_ALLOCATION_FAILURE;
-		}
-
+		
 		//fftwnd_plan Plan2DFFT;
 		fftwf_plan plan2DFFT;
         	//fftwnd_destroy_plan(Plan2DFFT);
@@ -277,42 +273,8 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 
 	//fftwnd_plan Plan2DFFT;
 	fftwf_plan Plan2DFFT;
-/*
-	fftwf_complex *DataToFFT_Measure = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex)*(sizeof(*FFT2DInfo.pData)/sizeof(fftwf_complex)));
-*/
-	fftwf_complex *DataToFFT_Measure = (fftwf_complex *) fftwf_malloc(Nx*Ny*sizeof(fftwf_complex));
 
-	if(DataToFFT_Measure == 0)
-	{
-		return MEMORY_ALLOCATION_FAILURE;
-	}
-
-	FFTW_COMPLEX *DataToFFT = (FFTW_COMPLEX*)DataToFFT_Measure;
-
-	if(FFT2DInfo.Dir > 0)
-        {
-                Plan2DFFT =fftwf_plan_dft_2d(Ny,Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-                                                   reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_FORWARD,FFTW_MEASURE);
-
-                if(Plan2DFFT == 0){
-                        return ERROR_IN_FFT;
-                }
-
-                fftwf_execute(Plan2DFFT);
-
-        }
-        else
-        {
-                Plan2DFFT = fftwf_plan_dft_2d(Ny,Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-                                                    reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_BACKWARD,FFTW_MEASURE);
-
-                if(Plan2DFFT == 0){
-                        return ERROR_IN_FFT;
-                }
-                fftwf_execute(Plan2DFFT);
-	}
-
-	DataToFFT = (FFTW_COMPLEX*)(FFT2DInfo.pData);
+	FFTW_COMPLEX *DataToFFT = (FFTW_COMPLEX*)(FFT2DInfo.pData);
 
 	char t0SignMult = (FFT2DInfo.Dir > 0)? -1 : 1;
 
@@ -324,7 +286,7 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 	{
 		//Plan2DFFT = fftw2d_create_plan(Ny, Nx, FFTW_FORWARD, FFTW_IN_PLACE);
 		Plan2DFFT =fftwf_plan_dft_2d(Ny,Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-						   reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_FORWARD,FFTW_MEASURE);
+						   reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_FORWARD,FFTW_ESTIMATE);
 		
 		if(Plan2DFFT == 0){
 		       	return ERROR_IN_FFT;
@@ -340,7 +302,7 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 	{
 		//Plan2DFFT = fftw2d_create_plan(Ny, Nx, FFTW_BACKWARD, FFTW_IN_PLACE);
 		Plan2DFFT = fftwf_plan_dft_2d(Ny,Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-                                                    reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_BACKWARD,FFTW_MEASURE);
+                                                    reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_BACKWARD,FFTW_ESTIMATE);
 		
 		if(Plan2DFFT == 0){
 		       	return ERROR_IN_FFT;
@@ -366,10 +328,6 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 	//fftwnd_destroy_plan(Plan2DFFT);
 	fftwf_destroy_plan(Plan2DFFT);
 
-	if(DataToFFT_Measure)
-	{
-		fftwf_free(DataToFFT_Measure);
-	}
 	if(ArrayShiftX != 0) 
 	{
 		delete[] ArrayShiftX; ArrayShiftX = 0;
@@ -412,21 +370,9 @@ int CGenMathFFT1D::Make1DFFT(CGenMathFFT1DInfo& FFT1DInfo)
 		if(m_ArrayShiftX == 0) return MEMORY_ALLOCATION_FAILURE;
 	}
 
-	float *indata_measure  = new float[Nx << 1];
-	float *outdata_measure = new float[Nx << 1];
-	if(indata_measure == 0 )
-	{
-		return MEMORY_ALLOCATION_FAILURE;
-	}
-
-	if(outdata_measure == 0 )
-	{
-		return MEMORY_ALLOCATION_FAILURE;
-	}
-
 	fftwf_plan Plan1DFFT;
-	FFTW_COMPLEX *DataToFFT = (FFTW_COMPLEX*)(indata_measure);
-	FFTW_COMPLEX *OutDataFFT = (FFTW_COMPLEX*)(outdata_measure);
+	FFTW_COMPLEX *DataToFFT = (FFTW_COMPLEX*)(FFT1DInfo.pInData);
+	FFTW_COMPLEX *OutDataFFT = (FFTW_COMPLEX*)(FFT1DInfo.pOutData);
 
 	FFTW_COMPLEX *pOutDataFFT = OutDataFFT; //OC03092016 to be used solely in fftw call
 /**
@@ -452,21 +398,19 @@ int CGenMathFFT1D::Make1DFFT(CGenMathFFT1DInfo& FFT1DInfo)
 
 	if(FFT1DInfo.Dir > 0)
 	{
-		int flags = FFTW_MEASURE;
+		int flags = FFTW_ESTIMATE;
 		if(DataToFFT == OutDataFFT)
 		{
 			//flags |= FFTW_IN_PLACE;
 			Plan1DFFT = fftwf_plan_dft_1d(Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-							 reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_FORWARD, flags);
+							 reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_FORWARD,FFTW_ESTIMATE);
 			pOutDataFFT = 0; //OC03092016 (see FFTW 2.1.5 doc clause above)
 		}
-
-		else
-		{
+		else{
 
 			//Plan1DFFT = fftw_create_plan(Nx, FFTW_FORWARD, flags);
 			Plan1DFFT = fftwf_plan_dft_1d(Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-							 reinterpret_cast<fftwf_complex *>(OutDataFFT), FFTW_FORWARD, flags);
+							 reinterpret_cast<fftwf_complex *>(OutDataFFT), FFTW_FORWARD,FFTW_ESTIMATE);
 		}
 		if(Plan1DFFT == 0){
 		       	return ERROR_IN_FFT;
@@ -476,37 +420,28 @@ int CGenMathFFT1D::Make1DFFT(CGenMathFFT1DInfo& FFT1DInfo)
 		//fftw(Plan1DFFT, FFT1DInfo.HowMany, DataToFFT, 1, Nx, pOutDataFFT, 1, Nx); //OC03092016
 		
 		fftwf_execute(Plan1DFFT);
-		DataToFFT = (FFTW_COMPLEX*)(FFT1DInfo.pInData);
-		OutDataFFT = (FFTW_COMPLEX*)(FFT1DInfo.pOutData);
-		fftwf_execute(Plan1DFFT);
-
 		RepairSignAfter1DFFT(OutDataFFT, FFT1DInfo.HowMany);
 		RotateDataAfter1DFFT(OutDataFFT, FFT1DInfo.HowMany);
 	}
 	else
 	{
-		int flags = FFTW_MEASURE;
+		int flags = FFTW_ESTIMATE;
 		if(DataToFFT == OutDataFFT)
 		{
 			//flags |= FFTW_IN_PLACE;
 			Plan1DFFT = fftwf_plan_dft_1d(Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-							 reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_BACKWARD,flags);
+							 reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_BACKWARD,FFTW_ESTIMATE);
 
 			pOutDataFFT = 0; //OC03092016 (see FFTW 2.1.5 doc clause above)
 		}
 		else{
 		//Plan1DFFT = fftw_create_plan(Nx, FFTW_BACKWARD, flags);
 			Plan1DFFT = fftwf_plan_dft_1d(Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-							 reinterpret_cast<fftwf_complex *>(OutDataFFT),FFTW_BACKWARD,flags);
+							 reinterpret_cast<fftwf_complex *>(OutDataFFT),FFTW_BACKWARD,FFTW_ESTIMATE);
 		}
 		if(Plan1DFFT == 0){
 		       	return ERROR_IN_FFT;
 		}
-
-		fftwf_execute(Plan1DFFT);
-
-		DataToFFT = (FFTW_COMPLEX*)(FFT1DInfo.pInData);
-		OutDataFFT = (FFTW_COMPLEX*)(FFT1DInfo.pOutData);
 
 		RotateDataAfter1DFFT(DataToFFT, FFT1DInfo.HowMany);
 		RepairSignAfter1DFFT(DataToFFT, FFT1DInfo.HowMany);
@@ -535,17 +470,6 @@ int CGenMathFFT1D::Make1DFFT(CGenMathFFT1DInfo& FFT1DInfo)
 
 	//OC_NERSC: to comment-out the following line for NERSC (to avoid crash with "python-mpi")
 	fftwf_destroy_plan(Plan1DFFT);
-	if(indata_measure != 0)
-	{
-		delete[] indata_measure;
-		indata_measure = 0;
-	}
-
-	if(outdata_measure != 0)
-	{
-		delete[] outdata_measure;
-		outdata_measure = 0;
-	}
 
 	if(m_ArrayShiftX != 0) 
 	{
