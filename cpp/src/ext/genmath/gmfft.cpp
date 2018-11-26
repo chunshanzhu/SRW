@@ -293,7 +293,8 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 		}
 		
 		//fftwnd(Plan2DFFT, 1, DataToFFT, 1, 0, DataToFFT, 1, 0);
-		fftwf_execute(Plan2DFFT);
+		fftwf_execute_dft(Plan2DFFT, reinterpret_cast<fftwf_complex *>(DataToFFT), \
+                                                reinterpret_cast<fftwf_complex *>(DataToFFT));
 
 		RepairSignAfter2DFFT(DataToFFT);
 		RotateDataAfter2DFFT(DataToFFT);
@@ -312,7 +313,9 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 		RepairSignAfter2DFFT(DataToFFT);
 		
 		//fftwnd(Plan2DFFT, 1, DataToFFT, 1, 0, DataToFFT, 1, 0);
-		fftwf_execute(Plan2DFFT);
+		fftwf_execute_dft(Plan2DFFT, reinterpret_cast<fftwf_complex *>(DataToFFT), \
+                                                reinterpret_cast<fftwf_complex *>(DataToFFT));
+
 	}
 	
 	//double Mult = FFT2DInfo.xStep*FFT2DInfo.yStep;
@@ -418,8 +421,10 @@ int CGenMathFFT1D::Make1DFFT(CGenMathFFT1DInfo& FFT1DInfo)
 
 		//fftw(Plan1DFFT, FFT1DInfo.HowMany, DataToFFT, 1, Nx, OutDataFFT, 1, Nx);
 		//fftw(Plan1DFFT, FFT1DInfo.HowMany, DataToFFT, 1, Nx, pOutDataFFT, 1, Nx); //OC03092016
-		
-		fftwf_execute(Plan1DFFT);
+
+		fftwf_execute_dft(Plan1DFFT, reinterpret_cast<fftwf_complex *>(DataToFFT), \
+                                                reinterpret_cast<fftwf_complex *>(OutDataFFT));
+
 		RepairSignAfter1DFFT(OutDataFFT, FFT1DInfo.HowMany);
 		RotateDataAfter1DFFT(OutDataFFT, FFT1DInfo.HowMany);
 	}
@@ -448,7 +453,8 @@ int CGenMathFFT1D::Make1DFFT(CGenMathFFT1DInfo& FFT1DInfo)
 
 		//fftw(Plan1DFFT, FFT1DInfo.HowMany, DataToFFT, 1, Nx, OutDataFFT, 1, Nx);
 		//fftw(Plan1DFFT, FFT1DInfo.HowMany, DataToFFT, 1, Nx, pOutDataFFT, 1, Nx); //OC03092016
-		fftwf_execute(Plan1DFFT);
+		fftwf_execute_dft(Plan1DFFT, reinterpret_cast<fftwf_complex *>(DataToFFT), \
+						reinterpret_cast<fftwf_complex *>(OutDataFFT));
 	}
 	//double Mult = FFT1DInfo.xStep;
 	double Mult = FFT1DInfo.xStep*FFT1DInfo.MultExtra;
