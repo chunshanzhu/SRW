@@ -57,8 +57,8 @@ srwlclient: $(SRW_SRC_DIR)/clients/c/srwlclient.cpp
 	$(CXX) $(CFLAGS) -O3 -o srwlclient ../src/clients/c/srwlclient.cpp libsrw.a $(LDFLAGS)
 
 oasys:
-	cp srwlpy.so /usr/local/lib64/python3.7/site-packages/srwlpy_aux/linux/fedora
-	cp srwlpy.so /usr/local/lib64/python3.7/site-packages
+	cp srwlpy.so /home/chunshan/.local/lib/python3.7/site-packages/srwlpy_aux/linux/fedora
+	cp srwlpy.so /home/chunshan/.local/lib/python3.7/site-packages/
 
 clean:
 	rm -f *.o *.so *.a srwlclient
