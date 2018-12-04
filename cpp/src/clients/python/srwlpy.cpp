@@ -382,13 +382,13 @@ void CopyPyClassNameToC(PyObject* pObj, char* c_str, int maxLenStr)
 	if(pTypeO != 0)
 	{
 		const char *sTypeName = pTypeO->tp_name;
-		if(sTypeName != 0)
+		int len = (int)strlen(sTypeName);
+		if((sTypeName != 0) && (len >0))
 		{
 			if(strcmp(sTypeName, "instance") != 0)
 			{
-				int len = (int)strlen(sTypeName);
 				if(len > maxLenStr) len = maxLenStr;
-				strncpy(c_str, sTypeName, len);
+				memcpy(c_str,sTypeName,len);
 				c_str[len] = '\0';
 				return;
 			}
