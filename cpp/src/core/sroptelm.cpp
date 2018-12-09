@@ -29,6 +29,7 @@
 #include "srinterf.h"
 #include "sropthck.h"
 #include "sroptgrat.h"
+#include <fftw3.h>
 
 //*************************************************************************
 
@@ -1186,6 +1187,26 @@ int srTGenOptElem::SetRadRepres(srTSRWRadStructAccessData* pRadAccessData, char 
 		float* AuxEz = new float[TwoNxNz];
 		if(AuxEz == 0) return MEMORY_ALLOCATION_FAILURE;
 
+		fftwf_plan Plan2DFFT;
+		if(FFT2DInfo.Dir > 0) {
+			Plan2DFFT = fftwf_plan_dft_2d(FFT2DInfo.Nx, FFT2DInfo.Ny, reinterpret_cast<fftwf_complex *>(AuxEx), \
+					reinterpret_cast<fftwf_complex *>(AuxEx), FFTW_FORWARD, FFTW_MEASURE);
+		}
+		else {
+			Plan2DFFT = fftwf_plan_dft_2d(FFT2DInfo.Nx, FFT2DInfo.Ny, reinterpret_cast<fftwf_complex *>(AuxEx),  \
+					reinterpret_cast<fftwf_complex *>(AuxEx), FFTW_BACKWARD, FFTW_MEASURE);
+		}
+		if(Plan2DFFT == 0){
+			return ERROR_IN_FFT;
+		}
+
+		fftwf_execute(Plan2DFFT);
+
+		for(size_t i = 0; i < TwoNxNz; i++)
+		{
+			AuxEx[i] = 0;
+		}
+ 
 		for(long ie = 0; ie < pRadAccessData->ne; ie++)
 		{
 			if(result = ExtractRadSliceConstE(pRadAccessData, ie, AuxEx, AuxEz)) return result;
@@ -1204,9 +1225,9 @@ int srTGenOptElem::SetRadRepres(srTSRWRadStructAccessData* pRadAccessData, char 
 			if(ar_zStartInSlicesE != 0) FFT2DInfo.yStart = ar_zStartInSlicesE[ie];
 
 			FFT2DInfo.pData = AuxEx;
-			if(result = FFT2D.Make2DFFT(FFT2DInfo)) return result;
+			if(result = FFT2D.Make2DFFT(FFT2DInfo, &Plan2DFFT)) return result;
 			FFT2DInfo.pData = AuxEz;
-			if(result = FFT2D.Make2DFFT(FFT2DInfo)) return result;
+			if(result = FFT2D.Make2DFFT(FFT2DInfo), &Plan2DFFT) return result;
 
 			if(WfrEdgeCorrShouldBeTreated)
 			{
@@ -1225,6 +1246,10 @@ int srTGenOptElem::SetRadRepres(srTSRWRadStructAccessData* pRadAccessData, char 
 
 		if(AuxEx != 0) delete[] AuxEx;
 		if(AuxEz != 0) delete[] AuxEz;
+		if(Plan2DFFT != 0)
+		{
+			fftwf_destroy_plan(Plan2DFFT);
+		}
 		//}
 	}
 

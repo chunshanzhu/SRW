@@ -148,7 +148,7 @@ public:
 		NeedsShiftBeforeX = NeedsShiftBeforeY = NeedsShiftAfterX = NeedsShiftAfterY = 0;
 	}
 
-	int Make2DFFT(CGenMathFFT2DInfo&);
+	int Make2DFFT(CGenMathFFT2DInfo&, fftwf_plan *pPrecreatedPlan2DFFT=0);
 	int AuxDebug_TestFFT_Plans();
 
 	void SetupLimitsTr(CGenMathFFT2DInfo& FFT2DInfo)

@@ -226,7 +226,7 @@ int CGenMathFFT2D::AuxDebug_TestFFT_Plans()
 //*************************************************************************
 //Forward FFT (FFT2DInfo.Dir = 1?): Int f(x,y)*exp(-i*2*Pi*(qx*x + qy*y)) dx dy
 //Backward FFT (FFT2DInfo.Dir = -1?): Int f(qx,qy)*exp(i*2*Pi*(qx*x + qy*y)) dqx dqy
-int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
+int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo, fftwf_plan *pPrecreatedPlan2DFFT)
 {// Assumes Nx, Ny even !
 	const double RelShiftTol = 1.E-06;
 
@@ -285,11 +285,16 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 	if(FFT2DInfo.Dir > 0)
 	{
 		//Plan2DFFT = fftw2d_create_plan(Ny, Nx, FFTW_FORWARD, FFTW_IN_PLACE);
-		Plan2DFFT =fftwf_plan_dft_2d(Ny,Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-						   reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_FORWARD,FFTW_ESTIMATE);
+		if(pPrecreatedPlan2DFFT == 0) {
+			Plan2DFFT =fftwf_plan_dft_2d(Ny,Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
+							   reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_FORWARD,FFTW_ESTIMATE);
 		
-		if(Plan2DFFT == 0){
-		       	return ERROR_IN_FFT;
+			if(Plan2DFFT == 0){
+			       	return ERROR_IN_FFT;
+			}
+		}
+		else {
+			Plan2DFFT = *pPrecreatedPlan2DFFT;
 		}
 		
 		//fftwnd(Plan2DFFT, 1, DataToFFT, 1, 0, DataToFFT, 1, 0);
@@ -302,11 +307,16 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 	else
 	{
 		//Plan2DFFT = fftw2d_create_plan(Ny, Nx, FFTW_BACKWARD, FFTW_IN_PLACE);
-		Plan2DFFT = fftwf_plan_dft_2d(Ny,Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
-                                                    reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_BACKWARD,FFTW_ESTIMATE);
+		if(pPrecreatedPlan2DFFT == 0) {
+			Plan2DFFT = fftwf_plan_dft_2d(Ny,Nx,reinterpret_cast<fftwf_complex *>(DataToFFT),\
+		                                            reinterpret_cast<fftwf_complex *>(DataToFFT),FFTW_BACKWARD,FFTW_ESTIMATE);
 		
-		if(Plan2DFFT == 0){
-		       	return ERROR_IN_FFT;
+			if(Plan2DFFT == 0){
+			       	return ERROR_IN_FFT;
+			}
+		}
+		else {
+			Plan2DFFT = *pPrecreatedPlan2DFFT;
 		}
 
 		RotateDataAfter2DFFT(DataToFFT);
@@ -329,8 +339,9 @@ int CGenMathFFT2D::Make2DFFT(CGenMathFFT2DInfo& FFT2DInfo)
 
 	//OC_NERSC: to comment-out the following line for NERSC (to avoid crash with "python-mpi")
 	//fftwnd_destroy_plan(Plan2DFFT);
-	fftwf_destroy_plan(Plan2DFFT);
-
+	if(Plan2DFFT != 0){
+		fftwf_destroy_plan(Plan2DFFT);
+	}
 	if(ArrayShiftX != 0) 
 	{
 		delete[] ArrayShiftX; ArrayShiftX = 0;
