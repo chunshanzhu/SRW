@@ -33,4 +33,4 @@ exFileNames = [
 for i in range(len(exFileNames)):
     scriptName = exFileNames[i]
     print('Starting', scriptName + '.', 'When done testing, close its windows to continue.')
-    os.system('python ' + scriptName)
+    os.system('python3 ' + scriptName)
